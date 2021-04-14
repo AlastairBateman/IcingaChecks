@@ -45,7 +45,7 @@ Check to see whether the IP address for `google.com` resolves as.
 
 ```
 check_ip_change --host google.com
-``
+```
 
 The first time you run the check you'll get a response like this:
 
