@@ -14,7 +14,7 @@ namespace check_ip_change {
         }
         static void Main(string[] args) {
             var cmd = new RootCommand {
-                new Option<string>(new [] {"-H","--host"},"The hostname/FQDN to check") { Required = true }
+                new Option<string>(new [] {"-H","--host"},"The hostname/FQDN to check") { IsRequired = true }
             };
 
             if (args.Length == 0) {
