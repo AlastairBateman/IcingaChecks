@@ -12,10 +12,13 @@ namespace check_tcp_state {
             not_open,
             unknown
         }
-        private static int NAGIOS_OK => 0;
-        private static int NAGIOS_WARNING => 1;
-        private static int NAGIOS_CRITICAL => 2;
-        private static int NAGIOS_UNKNOWN => 3;
+
+        public enum NagiosResponseCode {
+            OK = 0,
+            WARNING = 1,
+            CRITICAL = 2,
+            UNKNOWN = 3
+        }
 
         static void Main(string[] args) {
             var cmd = new RootCommand {
@@ -26,8 +29,7 @@ namespace check_tcp_state {
             };
 
             if (args.Length == 0) {
-                Console.WriteLine("UNKNOWN - no commandline arguments specified");
-                Environment.Exit(NAGIOS_UNKNOWN);
+                DoNagiosResponse(NagiosResponseCode.UNKNOWN, $"no commandline arguments specified");
             }
             cmd.Description = "A check to see if a port returns an expected state";
 
@@ -39,12 +41,12 @@ namespace check_tcp_state {
                 var testTime = testEnd - testStart;
 
                 if (actualState == expectedState) {
-                    Console.WriteLine($"OK - port is {actualState} as expected. Test took {testTime.TotalMilliseconds:N3}ms");
+                    DoNagiosResponse(NagiosResponseCode.OK, $"port is {actualState} as expected. Test took {testTime.TotalMilliseconds:N3}ms");
 
                 } else if (expectedState == PortState.not_open && (actualState == PortState.filtered || actualState == PortState.closed)) {
-                    Console.WriteLine($"OK - port is {actualState} as expected (not_open). Test took {testTime.TotalMilliseconds:N3}ms");
+                    DoNagiosResponse(NagiosResponseCode.OK, $"port is {actualState} as expected (not_open). Test took {testTime.TotalMilliseconds:N3}ms");
                 } else {
-                    Console.WriteLine($"CRITICAL - port is {actualState} where it should be {expectedState}. Test took {testTime.TotalMilliseconds:N3}ms");
+                    DoNagiosResponse(NagiosResponseCode.CRITICAL, $"port is {actualState} where it should be {expectedState}. Test took {testTime.TotalMilliseconds:N3}ms");
                 }
             });
 
@@ -81,12 +83,15 @@ namespace check_tcp_state {
                 } else if (ex.Message.StartsWith("A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond."))
                     actualState = PortState.filtered;
                 else {
-                    Console.WriteLine($"UNKNOWN - Unexpected exception message: {ex.Message}", ex);
-                    Environment.Exit(NAGIOS_UNKNOWN);
+                    DoNagiosResponse(NagiosResponseCode.UNKNOWN, $"Unexpected exception message: {ex.Message}");
                 }
             }
 
             return actualState;
+        }
+        static void DoNagiosResponse(NagiosResponseCode code, string message) {
+            Console.WriteLine($"{code} - {message}");
+            Environment.Exit((int)code);
         }
     }
 }
