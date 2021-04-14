@@ -4,8 +4,6 @@ using System.CommandLine.Invocation;
 using System.Net.Sockets;
 
 namespace check_tcp_state {
-
-
     class Program {
         public enum PortState {
             open,
@@ -18,7 +16,6 @@ namespace check_tcp_state {
         private static int NAGIOS_WARNING => 1;
         private static int NAGIOS_CRITICAL => 2;
         private static int NAGIOS_UNKNOWN => 3;
-
 
         static void Main(string[] args) {
             var cmd = new RootCommand {
@@ -39,8 +36,6 @@ namespace check_tcp_state {
                 var testStart = DateTime.UtcNow;
                 var actualState = TestPort(host, port, timeout);
                 var testEnd = DateTime.UtcNow;
-
-
                 var testTime = testEnd - testStart;
 
                 if (actualState == expectedState) {
@@ -56,7 +51,6 @@ namespace check_tcp_state {
             var result = cmd.InvokeAsync(args).Result;
 
             Environment.Exit(result);
-
         }
 
         private static PortState TestPort(string host, int port, int timeout) {
@@ -82,7 +76,6 @@ namespace check_tcp_state {
 
             } catch (Exception ex) {
                 // No connection could be made because the target machine actively refused it
-
                 if (ex.Message.StartsWith("No connection could be made because the target machine actively refused it")) {
                     actualState = PortState.closed;
                 } else if (ex.Message.StartsWith("A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond."))
@@ -96,6 +89,4 @@ namespace check_tcp_state {
             return actualState;
         }
     }
-
-
 }

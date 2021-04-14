@@ -1,13 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace check_ip_change {
-    class IPAddressConverter : JsonConverter {
+    /// <summary>
+    /// This is just to serialise an IP address because JsonConvert.Serialize doesn't handle IPAddress natively. 
+    /// </summary>
+    public class IPAddressConverter : JsonConverter {
         public override bool CanConvert(Type objectType) {
             return (objectType == typeof(IPAddress));
         }
