@@ -29,7 +29,7 @@ namespace check_tcp_state {
             };
 
             if (args.Length == 0) {
-                DoNagiosResponse(NagiosResponseCode.UNKNOWN, $"no commandline arguments specified");
+                args = new[] { "--help" };
             }
             cmd.Description = "A check to see if a port returns an expected state";
 

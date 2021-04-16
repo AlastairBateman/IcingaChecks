@@ -18,7 +18,7 @@ namespace check_ip_change {
             };
 
             if (args.Length == 0) {
-                DoNagiosResponse(NagiosResponseCode.UNKNOWN, "no commandline arguments specified");
+                args = new[] { "--help" };
             }
             cmd.Description = "A check to see if the IP address for a given host has changed since it was last checked.";
 
