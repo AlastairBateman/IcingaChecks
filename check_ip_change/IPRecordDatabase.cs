@@ -10,35 +10,39 @@ namespace check_ip_change {
         public class IPRecord {
             [JsonConverter(typeof(IPAddressConverter))]
             public IPAddress IPAddress { get; set; }
-            public DateTime LastChecked { get; set; } = DateTime.Now;
-
+            public DateTime LastChecked { get; set; } = DateTime.UtcNow;
+            public DateTime LastChanged { get; set; } = DateTime.UtcNow;
             public IPRecord(IPAddress ip) {
                 IPAddress = ip;
             }
         }
 
-        private Dictionary<string, IPRecord> Database { get; set; } = new Dictionary<string, IPRecord>();
+        private Dictionary<string, IPRecord> Database { get; set; }
         private string DbFileName => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify), "ip_record_database.json");
-
         public IPRecordDatabase() {
-            Load();
-        }
-
-        private void Load() {
+            // If the file already exists, then load it.
             if (File.Exists(DbFileName)) {
                 var text = File.ReadAllText(DbFileName);
-
                 Database = JsonConvert.DeserializeObject<Dictionary<string, IPRecord>>(text);
             } else {
+                // otherwise create a new one and save it.
                 Database = new Dictionary<string, IPRecord>();
+                Save();
             }
         }
         public void Add(string host, IPAddress ip) {
-            var record = new IPRecord(ip);
             if (Database.ContainsKey(host)) {
-                Database[host] = record;
+                // if the host exists in the database update the LastChecked timestamp.
+                Database[host].LastChecked = DateTime.UtcNow;
+
+                // if the entry has changed, update the IPAddress and LastChanged timestamp.
+                if (Database[host].IPAddress != ip) {
+                    Database[host].IPAddress = ip;
+                    Database[host].LastChanged = DateTime.UtcNow;
+                }
             } else {
-                Database.Add(host, record);
+                // otherwise add a new record
+                Database.Add(host, new IPRecord(ip));
             }
 
             Save();
@@ -51,7 +55,13 @@ namespace check_ip_change {
             return JsonConvert.SerializeObject(Database, Formatting.Indented);
         }
         public IPAddress LookupHost(string host) {
-            return Database.FirstOrDefault(x => x.Key == host).Value?.IPAddress;
+            var val = Database.FirstOrDefault(x => x.Key == host);
+
+            if (val.Key == null) {
+                return null;
+            } else {
+                return val.Value?.IPAddress;
+            }
         }
         public void Dispose() {
             Save();
