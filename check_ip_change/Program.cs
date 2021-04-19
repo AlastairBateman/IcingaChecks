@@ -26,9 +26,9 @@ namespace check_ip_change {
 
             cmd.Handler = CommandHandler.Create<string>(async (host) => {
                 var testStart = DateTime.UtcNow;
-                using var db = new IPRecordDatabase();
+                var db = new IPRecordDatabase();
 
-                var prev = db.LookupHost(host);
+                var prev = IPRecordDatabase.LookupHost(host);
 
                 var lookup = await Dns.GetHostEntryAsync(host);
                 var curr = lookup?.AddressList.First();
@@ -36,7 +36,7 @@ namespace check_ip_change {
                 var testEnd = DateTime.UtcNow;
                 var testTime = testEnd - testStart;
 
-                db.Add(host, curr);
+                await IPRecordDatabase.Add(host, curr);
 
                 if (curr == null) {
                     DoNagiosResponse(NagiosResponseCode.CRITICAL, $"Unable to obtain valid IP address for {host}. Test took {testTime.TotalMilliseconds:N3}ms");
@@ -53,9 +53,6 @@ namespace check_ip_change {
 
             Environment.Exit(result);
         }
-
-
-
         static void DoNagiosResponse(NagiosResponseCode code, string message) {
             Console.WriteLine($"{code} - {message}");
             Environment.Exit((int)code);
