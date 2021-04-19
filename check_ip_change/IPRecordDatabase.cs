@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 
 namespace check_ip_change {
     public class IPRecordDatabase : IDisposable {
@@ -17,8 +18,11 @@ namespace check_ip_change {
             }
         }
 
+
+
         private Dictionary<string, IPRecord> Database { get; set; }
         private string DbFileName => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify), "ip_record_database.json");
+
         public IPRecordDatabase() {
             // If the file already exists, then load it.
             if (File.Exists(DbFileName)) {
@@ -48,8 +52,28 @@ namespace check_ip_change {
             Save();
         }
         private void Save() {
-            var text = JsonConvert.SerializeObject(Database);
-            File.WriteAllText(DbFileName, text);
+            using var mutex = new Mutex(false, "file lock");
+            var haveMutex = false;
+
+            try {
+                // try to acquire the mutex for 10 seconds.
+                haveMutex = mutex.WaitOne(10000);
+            } catch (AbandonedMutexException) {
+                haveMutex = true;
+            }
+
+            if (!haveMutex) {
+                // Haven't been able to acquire the mutex before timing out. 
+                return;
+            }
+
+            // We have the mutex. Time to write to the file. 
+            try {
+                var text = JsonConvert.SerializeObject(Database);
+                File.WriteAllText(DbFileName, text);
+            } finally {
+                mutex.ReleaseMutex();
+            }
         }
         public override string ToString() {
             return JsonConvert.SerializeObject(Database, Formatting.Indented);

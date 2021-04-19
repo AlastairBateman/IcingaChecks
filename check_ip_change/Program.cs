@@ -2,6 +2,8 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
 using System.Net;
 
 namespace check_ip_change {
@@ -12,7 +14,7 @@ namespace check_ip_change {
             CRITICAL = 2,
             UNKNOWN = 3
         }
-        static void Main(string[] args) {
+        static async Task Main(string[] args) {
             var cmd = new RootCommand {
                 new Option<string>(new [] {"-H","--host"},"The hostname/FQDN to check") { IsRequired = true }
             };
@@ -22,13 +24,14 @@ namespace check_ip_change {
             }
             cmd.Description = "A check to see if the IP address for a given host has changed since it was last checked.";
 
-            cmd.Handler = CommandHandler.Create<string>((host) => {
-
+            cmd.Handler = CommandHandler.Create<string>(async (host) => {
                 var testStart = DateTime.UtcNow;
                 using var db = new IPRecordDatabase();
 
                 var prev = db.LookupHost(host);
-                var curr = Dns.GetHostEntry(host).AddressList.First();
+
+                var lookup = await Dns.GetHostEntryAsync(host);
+                var curr = lookup?.AddressList.First();
 
                 var testEnd = DateTime.UtcNow;
                 var testTime = testEnd - testStart;
@@ -46,10 +49,12 @@ namespace check_ip_change {
                 }
             });
 
-            var result = cmd.InvokeAsync(args).Result;
+            var result = await cmd.InvokeAsync(args);
 
             Environment.Exit(result);
         }
+
+
 
         static void DoNagiosResponse(NagiosResponseCode code, string message) {
             Console.WriteLine($"{code} - {message}");
