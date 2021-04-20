@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 
-namespace check_ip_change {
+namespace check_ip_change.Data {
     public class IPRecordDatabase {
         public static async Task Add(string host, IPAddress ip) {
             using var db = new IPDbContext();

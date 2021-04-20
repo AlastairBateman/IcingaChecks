@@ -1,10 +1,10 @@
-﻿using System;
+﻿using check_ip_change.Data;
+using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace check_ip_change {
     class Program {
